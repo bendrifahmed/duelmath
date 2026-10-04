@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Duel Mathématique</title>
+<style>
+:root{
+  --blue:#1683ff; --blue-dark:#0756ad; --red:#ff4567; --red-dark:#c52245;
+  --bg:#07111f; --panel:#101e31; --panel2:#14253d; --text:#f7fbff;
+  --muted:#9db0c7; --green:#35d07f; --yellow:#ffd34d; --danger:#ff5b5b;
+}
+*{box-sizing:border-box}
+body{
+  margin:0; font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
+  background:radial-gradient(circle at 50% -10%,#1c3d68 0,#07111f 48%);
+  color:var(--text); min-height:100vh;
+}
+button,input{font:inherit}
+.app{max-width:1500px;margin:auto;padding:18px}
+header{
+  display:flex;align-items:center;justify-content:space-between;gap:16px;
+  padding:14px 20px;background:rgba(16,30,49,.88);border:1px solid #29415e;
+  border-radius:20px;box-shadow:0 15px 45px #0005;backdrop-filter:blur(10px)
+}
+.brand h1{margin:0;font-size:clamp(24px,3vw,42px);letter-spacing:-1px}
+.brand p{margin:3px 0 0;color:var(--muted)}
+.controls{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}
+select,.topbtn{
+  border:1px solid #385270;background:#0b1727;color:white;border-radius:11px;
+  padding:10px 13px;cursor:pointer;font-weight:700
+}
+.topbtn:hover,select:hover{border-color:#6d8eb4}
+.primary{background:linear-gradient(135deg,#1683ff,#6b4dff);border:0}
+.config{
+  display:flex;align-items:center;gap:6px;color:var(--muted);font-size:13px;font-weight:700;
+  border:1px solid #385270;background:#0b1727;border-radius:11px;padding:6px 10px
+}
+.config input[type=number]{
+  width:70px;border:1px solid #385270;background:#07111f;color:#fff;border-radius:8px;
+  padding:5px 7px;text-align:center;font-weight:800;outline:none
+}
+.config input[type=number]:focus{border-color:#6d8eb4}
+.config input[type=checkbox]{width:17px;height:17px;accent-color:#1683ff;cursor:pointer}
+.config.toggle{cursor:pointer}
+.config input:disabled{opacity:.5;cursor:not-allowed}
+body.no-calc .calc-title,body.no-calc .calculator{display:none}
+.layout{display:grid;grid-template-columns:1fr 1.3fr 1fr;gap:16px;margin-top:16px}
+.team,.center{
+  background:rgba(16,30,49,.9);border:1px solid #29415e;border-radius:22px;
+  box-shadow:0 15px 45px #0005;overflow:hidden
+}
+.team-head{padding:18px;text-align:center;color:#fff}
+.blue .team-head{background:linear-gradient(135deg,var(--blue-dark),var(--blue))}
+.red .team-head{background:linear-gradient(135deg,var(--red-dark),var(--red))}
+.team-name{font-size:24px;font-weight:900}
+.score{font-size:64px;font-weight:950;line-height:1;margin-top:5px;text-shadow:0 4px 15px #0004}
+.score.bump{animation:bump .55s ease}
+@keyframes bump{50%{transform:scale(1.3)}}
+.team-body{padding:16px}
+.answer-row{display:flex;gap:8px}
+.answer-row input{
+  min-width:0;flex:1;padding:13px;border-radius:12px;border:2px solid #385270;
+  background:#07111f;color:#fff;font-size:20px;text-align:center;outline:none
+}
+.blue .answer-row input:focus{border-color:var(--blue)}
+.red .answer-row input:focus{border-color:var(--red)}
+.submit{padding:12px 13px;border:0;border-radius:12px;color:#fff;font-weight:900;cursor:pointer}
+.blue .submit{background:var(--blue)}
+.red .submit{background:var(--red)}
+.submit:disabled{opacity:.4;cursor:not-allowed}
+.feedback{min-height:34px;text-align:center;padding:8px;font-weight:800}
+.calc-title{text-align:center;color:var(--muted);margin:12px 0 8px}
+.calculator{display:grid;grid-template-columns:repeat(4,1fr);gap:7px}
+.calc-display{
+  grid-column:1/-1;background:#050b13;border:1px solid #304963;border-radius:10px;
+  min-height:54px;padding:9px;text-align:right;overflow:auto;font-size:19px
+}
+.calc-btn{
+  padding:11px 4px;border:1px solid #304963;background:#182b43;color:#fff;
+  border-radius:9px;cursor:pointer;font-weight:800
+}
+.calc-btn:hover{background:#243d5b}
+.calc-op{background:#233e5d}.calc-clear{background:#62303b}.calc-eq{background:#236a4c}
+.center{display:flex;flex-direction:column;padding:18px}
+.status{text-align:center;color:var(--muted);font-weight:800}
+.timer{
+  margin:8px auto 14px;width:115px;height:115px;border-radius:50%;
+  display:grid;place-items:center;font-size:43px;font-weight:950;
+  background:conic-gradient(var(--yellow) 100%,#27384d 0);position:relative
+}
+.timer::after{content:"";position:absolute;inset:8px;border-radius:50%;background:#0b1727}
+.timer span{position:relative;z-index:1}
+.timer.warning{color:#ff6b6b;animation:pulse .7s infinite}
+@keyframes pulse{50%{transform:scale(1.05)}}
+.question-card{
+  flex:1;min-height:230px;border:2px solid #36516f;border-radius:20px;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  padding:25px;text-align:center;background:linear-gradient(180deg,#142941,#0d1c2e)
+}
+.question-label{font-size:14px;color:var(--muted);text-transform:uppercase;letter-spacing:2px}
+.question{font-size:clamp(28px,4vw,52px);font-weight:950;margin:15px 0;word-break:break-word}
+.answer-reveal{min-height:32px;font-weight:900;color:var(--yellow)}
+.message{min-height:42px;text-align:center;padding:10px;font-size:17px;font-weight:900}
+.progress-wrap{margin-top:14px}
+.progress-label{display:flex;justify-content:space-between;color:var(--muted);font-size:13px}
+.progress{height:10px;background:#091321;border-radius:20px;overflow:hidden;margin-top:5px}
+.progress i{display:block;height:100%;background:linear-gradient(90deg,#1683ff,#ff4567);width:0;transition:.3s}
+.actions{display:flex;gap:8px;margin-top:13px}
+.action{flex:1;padding:13px;border:0;border-radius:12px;cursor:pointer;font-weight:900;color:white;background:#203750}
+.action.next{background:linear-gradient(135deg,#35a66b,#1f7d51)}
+.action:disabled{opacity:.35;cursor:not-allowed}
+.instructions{
+  margin-top:16px;padding:14px 18px;background:rgba(16,30,49,.85);
+  border:1px solid #29415e;border-radius:18px;color:#c4d2e2;text-align:center
+}
+.flash{position:fixed;inset:0;pointer-events:none;opacity:0;z-index:20}
+.flash.blue{background:#1683ff33;animation:flash .45s}
+.flash.red{background:#ff456733;animation:flash .45s}
+@keyframes flash{0%{opacity:1}100%{opacity:0}}
+.transfer{animation:transfer .8s ease}
+@keyframes transfer{50%{transform:translateY(-7px) scale(1.04)}}
+.winner{
+  position:fixed;inset:0;background:#020813d9;display:none;place-items:center;
+  z-index:30;padding:20px
+}
+.winner.show{display:grid}
+.winner-box{
+  max-width:600px;width:100%;background:#12243a;border:2px solid #45617f;
+  border-radius:24px;padding:35px;text-align:center;box-shadow:0 25px 80px #0009
+}
+.winner-box h2{font-size:42px;margin:5px}
+.final-scores{display:flex;justify-content:center;gap:35px;margin:25px 0;font-size:24px;font-weight:900}
+@media(max-width:1000px){.layout{grid-template-columns:1fr}.center{order:-1}}
+@media(max-width:520px){.app{padding:8px}.score{font-size:50px}.question-card{min-height:190px}.timer{width:90px;height:90px;font-size:34px}}
+</style>
+</head>
+<body>
+<div id="flash" class="flash"></div>
+<div class="app">
+<header>
+  <div class="brand">
+    <h1>⚡ DUEL MATHÉMATIQUE</h1>
+    <p id="subtitle">Deux équipes • 99 questions • Une seule réponse par question</p>
+  </div>
+  <div class="controls">
+    <label class="config" title="Nombre de questions">
+      ❓ Questions
+      <input type="number" id="cfgQuestions" min="1" max="999" step="1" value="99">
+    </label>
+    <label class="config" title="Temps par question (secondes)">
+      ⏱️ Secondes
+      <input type="number" id="cfgTime" min="5" max="600" step="5" value="30">
+    </label>
+    <label class="config toggle" title="Afficher ou masquer les calculatrices">
+      <input type="checkbox" id="cfgCalc" checked>
+      🧮 Calculatrices
+    </label>
+    <label>
+      <select id="level" aria-label="Niveau">
+        <option value="easy">Facile</option>
+        <option value="medium" selected>Moyen</option>
+        <option value="hard">Difficile</option>
+        <option value="expert">Expert</option>
+      </select>
+    </label>
+    <button class="topbtn primary" id="startBtn">▶ Démarrer</button>
+    <button class="topbtn" id="restartBtn">↻ Recommencer</button>
+  </div>
+</header>
+
+<div class="layout">
+  <section class="team blue" id="bluePanel">
+    <div class="team-head">
+      <div class="team-name">🔵 ÉQUIPE BLEUE</div>
+      <div class="score" id="blueScore">0</div>
+    </div>
+    <div class="team-body">
+      <div class="answer-row">
+        <input id="blueAnswer" inputmode="decimal" autocomplete="off" placeholder="Votre réponse">
+        <button class="submit" id="blueSubmit">VALIDER</button>
+      </div>
+      <div class="feedback" id="blueFeedback"></div>
+      <div class="calc-title">🧮 Calculatrice de l'équipe bleue</div>
+      <div class="calculator" id="blueCalc"></div>
+    </div>
+  </section>
+
+  <main class="center">
+    <div class="status" id="status">Prêt pour le duel ?</div>
+    <div class="timer" id="timer"><span>30</span></div>
+    <div class="question-card">
+      <div class="question-label">Question <span id="questionNo">0</span> / <span id="questionTotal">99</span></div>
+      <div class="question" id="question">Appuyez sur « Démarrer »</div>
+      <div class="answer-reveal" id="answerReveal"></div>
+    </div>
+    <div class="message" id="message">Chaque bonne réponse rapporte +1 point. Une mauvaise réponse transfère 1 point à l'adversaire.</div>
+    <div class="progress-wrap">
+      <div class="progress-label"><span>Progression</span><span id="progressText">0 / 99</span></div>
+      <div class="progress"><i id="progressBar"></i></div>
+    </div>
+    <div class="actions">
+      <button class="action next" id="nextBtn" disabled>Question suivante →</button>
+    </div>
+    <div class="instructions">
+      ⏱️ <b><span id="timeInfo">30</span> secondes</b> pour répondre. Chaque équipe ne peut valider qu'une seule réponse.
+      Utilisez votre calculatrice si nécessaire. Respectez les priorités de calcul.
+    </div>
+  </main>
+
+  <section class="team red" id="redPanel">
+    <div class="team-head">
+      <div class="team-name">🔴 ÉQUIPE ROUGE</div>
+      <div class="score" id="redScore">0</div>
+    </div>
+    <div class="team-body">
+      <div class="answer-row">
+        <input id="redAnswer" inputmode="decimal" autocomplete="off" placeholder="Votre réponse">
+        <button class="submit" id="redSubmit">VALIDER</button>
+      </div>
+      <div class="feedback" id="redFeedback"></div>
+      <div class="calc-title">🧮 Calculatrice de l'équipe rouge</div>
+      <div class="calculator" id="redCalc"></div>
+    </div>
+  </section>
+</div>
+</div>
+
+<div class="winner" id="winner">
+  <div class="winner-box">
+    <div style="font-size:60px">🏆</div>
+    <h2 id="winnerTitle">Fin du duel !</h2>
+    <p>La manche de <span id="finalTotal">99</span> questions est terminée.</p>
+    <div class="final-scores">
+      <div>🔵 <span id="finalBlue">0</span></div>
+      <div>🔴 <span id="finalRed">0</span></div>
+    </div>
+    <button class="topbtn primary" onclick="restartGame()">↻ Rejouer</button>
+  </div>
+</div>
+
+<script>
+let TOTAL=99, TIME=30;
+let state={blue:0,red:0,q:0,answer:null,active:false,answered:{blue:false,red:false},timer:null,timeLeft:TIME};
+const $=id=>document.getElementById(id);
+
+function clampInput(el){
+  let v=parseInt(el.value,10);
+  const min=Number(el.min),max=Number(el.max);
+  if(!Number.isFinite(v))v=Number(el.defaultValue);
+  v=Math.min(max,Math.max(min,v));
+  el.value=v;return v;
+}
+function applyConfig(){
+  TOTAL=clampInput($('cfgQuestions'));
+  TIME=clampInput($('cfgTime'));
+  $('questionTotal').textContent=TOTAL;
+  $('finalTotal').textContent=TOTAL;
+  $('timeInfo').textContent=TIME;
+  $('subtitle').textContent=`Deux équipes • ${TOTAL} question${TOTAL>1?'s':''} • Une seule réponse par question`;
+  if(!state.active&&state.q===0){
+    $('progressText').textContent=`0 / ${TOTAL}`;
+    state.timeLeft=TIME;updateTimer();
+  }
+}
+function lockConfig(locked){
+  $('cfgQuestions').disabled=locked;$('cfgTime').disabled=locked;
+}
+function toggleCalculators(){
+  document.body.classList.toggle('no-calc',!$('cfgCalc').checked);
+}
+
+function rand(a,b){return Math.floor(Math.random()*(b-a+1))+a}
+function gcd(a,b){a=Math.abs(a);b=Math.abs(b);while(b){[a,b]=[b,a%b]}return a}
+function frac(n,d){if(d<0){n=-n;d=-d}let g=gcd(n,d);return [n/g,d/g]}
+function fstr(n,d){let f=frac(n,d);return f[1]===1?String(f[0]):`${f[0]}/${f[1]}`}
+function op(a,sign,b){return `${a} ${sign} ${b}`}
+
+function generate(level){
+  let a,b,c,d,x,y,ans,expr;
+  if(level==='easy'){
+    let t=rand(0,3);
+    if(t===0){a=rand(10,90);b=rand(5,90);return {expr:op(a,'+',b),ans:a+b}}
+    if(t===1){a=rand(20,100);b=rand(5,a);return {expr:op(a,'−',b),ans:a-b}}
+    if(t===2){a=rand(2,12);b=rand(2,12);return {expr:op(a,'×',b),ans:a*b}}
+    b=rand(2,12);ans=rand(2,12)*b;return {expr:op(ans,'÷',b),ans:ans/b}
+  }
+  if(level==='medium'){
+    let t=rand(0,3);
+    if(t===0){a=rand(5,40);b=rand(2,30);c=rand(2,20);expr=`${a} + ${b} × ${c}`;return {expr,ans:a+b*c}}
+    if(t===1){a=rand(10,50);b=rand(2,20);c=rand(2,20);expr=`(${a} + ${b}) × ${c}`;return {expr,ans:(a+b)*c}}
+    if(t===2){a=rand(20,80);b=rand(2,20);c=rand(2,10);expr=`${a} − ${b} × ${c}`;return {expr,ans:a-b*c}}
+    a=rand(2,15);b=rand(2,15);c=rand(2,10);expr=`[${a} + ${b}] ÷ ${c}`; 
+    let n=a+b; if(n%c!==0){c=1}; return {expr:c===1?`[${a} + ${b}] ÷ 1`:expr,ans:n/c}
+  }
+  if(level==='hard'){
+    let t=rand(0,3);
+    if(t===0){a=rand(3,20);b=rand(2,12);c=rand(2,12);d=rand(2,10);expr=`[${a} + ${b}] × (${c} − ${d})`;return {expr,ans:(a+b)*(c-d)}}
+    if(t===1){a=rand(30,100);b=rand(2,12);c=rand(2,8);expr=`${a} − [${b} + ${c} × 2]`;return {expr,ans:a-(b+c*2)}}
+    if(t===2){a=rand(2,12);b=rand(2,12);c=rand(2,12);expr=`(${a} + ${b}) × ${c} − ${rand(2,20)}`;let z=Number(expr.match(/− (\d+)$/)[1]);return {expr,ans:(a+b)*c-z}}
+    b=rand(2,10);c=rand(2,10);a=rand(2,10);d=rand(2,10);let n=(a+b)*c;return {expr:`[${a} + ${b}] × ${c} ÷ ${d}`,ans:n/d}
+  }
+  // Expert: fractions/divisions are deliberately generated with integer results often enough.
+  let t=rand(0,3);
+  if(t===0){a=rand(2,15);b=rand(2,15);c=rand(2,10);d=rand(2,10);return {expr:`[${a} × (${b} + ${c})] ÷ ${d}`,ans:(a*(b+c))/d}}
+  if(t===1){a=rand(2,20);b=rand(2,10);c=rand(2,10);d=rand(2,10);return {expr:`(${a} + ${b}) × [${c} − ${d}]`,ans:(a+b)*(c-d)}}
+  if(t===2){a=rand(3,20);b=rand(2,9);c=rand(2,9);d=rand(2,9);return {expr:`${a} + [${b} × (${c} + ${d})]`,ans:a+b*(c+d)}}
+  a=rand(3,12);b=rand(2,12);c=rand(2,10);d=rand(2,10);return {expr:`[${a} + ${b}] × (${c} − ${d}) ÷ 2`,ans:(a+b)*(c-d)/2}
+}
+
+function formatAnswer(v){
+  if(Number.isInteger(v)) return String(v);
+  let s=v.toFixed(6).replace(/0+$/,'').replace(/\.$/,'');
+  return s.replace('.',',');
+}
+function normalizeInput(s){
+  s=String(s).trim().replace(',','.');
+  if(!s)return NaN;
+  if(/^[-+]?\d+\/\d+$/.test(s)){let [n,d]=s.split('/').map(Number);return d? n/d:NaN}
+  return Number(s);
+}
+function equivalent(a,b){return Number.isFinite(a)&&Number.isFinite(b)&&Math.abs(a-b)<1e-9}
+
+function buildCalc(id){
+  const el=$(id); el.innerHTML='';
+  const display=document.createElement('div');display.className='calc-display';display.id=id+'Display';display.textContent='0';el.appendChild(display);
+  const keys=['C','(',')','÷','7','8','9','×','4','5','6','−','1','2','3','+','0','⌫','=',''];
+  keys.forEach(k=>{
+    if(k==='')return;
+    let b=document.createElement('button');b.className='calc-btn '+(['÷','×','−','+'].includes(k)?'calc-op ':'')+(k==='C'?'calc-clear ':'')+(k==='='?'calc-eq':'');b.textContent=k;
+    b.onclick=()=>calcPress(id,k);el.appendChild(b)
+  });
+}
+const calcState={};
+function calcPress(id,k){
+  calcState[id]??={s:''};let s=calcState[id].s;
+  if(k==='C')s='';
+  else if(k==='⌫')s=s.slice(0,-1);
+  else if(k==='='){
+    try{
+      let js=s.replace(/×/g,'*').replace(/÷/g,'/').replace(/−/g,'-');
+      if(!/^[0-9+*/().\-\s]+$/.test(js))throw 0;
+      let v=Function('"use strict";return ('+js+')')();
+      if(!Number.isFinite(v))throw 0;
+      s=String(Math.round(v*1e10)/1e10);
+    }catch(e){s='Erreur'}
+  }else{
+    if(s==='Erreur')s='';
+    s+=k;
+  }
+  calcState[id].s=s;$(id+'Display').textContent=s||'0';
+}
+function clearInputs(){
+  ['blue','red'].forEach(t=>{$(t+'Answer').value='';$(t+'Feedback').textContent='';$(t+'Answer').disabled=false;$(t+'Submit').disabled=false})
+}
+function renderScores(){
+  $('blueScore').textContent=state.blue;$('redScore').textContent=state.red;
+}
+function animateScore(team,delta){
+  const el=$(team+'Score');el.classList.remove('bump');void el.offsetWidth;el.classList.add('bump');
+  $('flash').className='flash '+team;setTimeout(()=>$('flash').className='flash',500);
+}
+function changeScore(team,delta){
+  let before=state[team];state[team]=Math.max(0,state[team]+delta);renderScores();
+  if(state[team]!==before)animateScore(team,delta);
+}
+function setMessage(html){$('message').innerHTML=html}
+function reveal(){
+  $('answerReveal').innerHTML=`Réponse correcte : <strong>${formatAnswer(state.answer)}</strong>`;
+}
+function finishQuestion(reason){
+  if(!state.active)return;
+  state.active=false;clearInterval(state.timer);state.timer=null;
+  $('blueSubmit').disabled=true;$('redSubmit').disabled=true;
+  $('blueAnswer').disabled=true;$('redAnswer').disabled=true;
+  reveal();
+  $('nextBtn').disabled=false;
+  $('status').textContent=reason||'Question terminée';
+}
+function submit(team){
+  if(!state.active||state.answered[team])return;
+  const value=normalizeInput($(team+'Answer').value);
+  if(!Number.isFinite(value)){ $(team+'Feedback').textContent='⚠️ Entrez une réponse valide.';return}
+  state.answered[team]=true;$(team+'Answer').disabled=true;$(team+'Submit').disabled=true;
+  if(equivalent(value,state.answer)){
+    changeScore(team,1);
+    $(team+'Feedback').textContent='✅ Correct ! +1 point';
+    setMessage(`🎉 L'équipe ${team==='blue'?'bleue 🔵':'rouge 🔴'} gagne <strong>+1 point</strong> !`);
+  }else{
+    const other=team==='blue'?'red':'blue';
+    changeScore(team,-1);changeScore(other,1);
+    $(team+'Feedback').textContent=`❌ Incorrect. -1 point`;
+    setMessage(`↔️ Transfert : l'équipe ${team==='blue'?'bleue 🔵':'rouge 🔴'} perd 1 point et l'équipe ${other==='blue'?'bleue 🔵':'rouge 🔴'} gagne 1 point.`);
+  }
+  if(state.answered.blue&&state.answered.red) finishQuestion('Les deux équipes ont répondu !');
+}
+function loadQuestion(){
+  if(state.q>=TOTAL){endGame();return}
+  state.q++;state.answered={blue:false,red:false};state.active=true;state.timeLeft=TIME;
+  let level=$('level').value;let p=generate(level);
+  state.answer=p.ans;
+  $('questionNo').textContent=state.q;$('question').textContent=p.expr;
+  $('answerReveal').textContent='';$('status').textContent='À vous de jouer !';
+  $('progressText').textContent=`${state.q} / ${TOTAL}`;
+  $('progressBar').style.width=(state.q/TOTAL*100)+'%';
+  clearInputs();$('nextBtn').disabled=true;
+  $('message').textContent='Résolvez l’opération et validez votre réponse.';
+  updateTimer();
+  clearInterval(state.timer);state.timer=setInterval(()=>{
+    state.timeLeft--;updateTimer();
+    if(state.timeLeft<=0){
+      finishQuestion('⏰ Temps écoulé !');
+      setMessage(`⏰ Temps écoulé. La bonne réponse était <strong>${formatAnswer(state.answer)}</strong>.`);
+    }
+  },1000);
+}
+function updateTimer(){
+  $('timer').querySelector('span').textContent=state.timeLeft;
+  let pct=state.timeLeft/TIME*100;
+  $('timer').style.background=`conic-gradient(var(--yellow) ${pct}%, #27384d 0)`;
+  $('timer').classList.toggle('warning',state.timeLeft<=8);
+}
+function startGame(){
+  clearInterval(state.timer);
+  applyConfig();lockConfig(true);
+  state.blue=0;state.red=0;state.q=0;state.active=false;renderScores();
+  $('winner').classList.remove('show');loadQuestion();
+}
+function nextQuestion(){if(!state.active)loadQuestion()}
+function restartGame(){clearInterval(state.timer);lockConfig(false);applyConfig();state={blue:0,red:0,q:0,answer:null,active:false,answered:{blue:false,red:false},timer:null,timeLeft:TIME};renderScores();$('winner').classList.remove('show');$('question').textContent='Appuyez sur « Démarrer »';$('questionNo').textContent='0';$('progressText').textContent=`0 / ${TOTAL}`;$('progressBar').style.width='0%';$('answerReveal').textContent='';$('status').textContent='Prêt pour le duel ?';$('message').textContent='Chaque bonne réponse rapporte +1 point. Une mauvaise réponse transfère 1 point à l’adversaire.';clearInputs();updateTimer()}
+function endGame(){
+  state.active=false;clearInterval(state.timer);lockConfig(false);
+  $('finalBlue').textContent=state.blue;$('finalRed').textContent=state.red;
+  $('winnerTitle').textContent=state.blue===state.red?'🤝 Égalité !':state.blue>state.red?'🏆 Victoire de l’équipe bleue !':'🏆 Victoire de l’équipe rouge !';
+  $('winner').classList.add('show');
+}
+$('startBtn').onclick=startGame;$('restartBtn').onclick=restartGame;$('nextBtn').onclick=nextQuestion;
+$('blueSubmit').onclick=()=>submit('blue');$('redSubmit').onclick=()=>submit('red');
+['blueAnswer','redAnswer'].forEach((id,i)=>$(id).addEventListener('keydown',e=>{if(e.key==='Enter')submit(i?'red':'blue')}));
+$('cfgQuestions').addEventListener('change',applyConfig);
+$('cfgTime').addEventListener('change',applyConfig);
+$('cfgCalc').addEventListener('change',toggleCalculators);
+buildCalc('blueCalc');buildCalc('redCalc');renderScores();applyConfig();toggleCalculators();
+</script>
+</body>
+</html>
